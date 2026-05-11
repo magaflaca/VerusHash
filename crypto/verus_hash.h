@@ -16,7 +16,9 @@
 
 extern "C"
 {
+#if !defined(VERUSHASH_PORTABLE_ONLY)
 #include "crypto/haraka.h"
+#endif
 #include "crypto/haraka_portable.h"
 }
 

@@ -113,6 +113,9 @@ __m128i __verusclmulwithoutreduction64alignedrepeat_sv2_2_port(__m128i *randomso
 
 inline bool IsCPUVerusOptimized()
 {
+#if defined(VERUSHASH_PORTABLE_ONLY)
+    __cpuverusoptimized = false;
+#else
     #if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64) || defined(_M_ARM) || defined(_M_ARM64) || defined(_M_ARM) || defined(_M_ARM64)
     #if defined(__APPLE__)
     __cpuverusoptimized = true;
@@ -147,6 +150,7 @@ inline bool IsCPUVerusOptimized()
 #endif
     }
     #endif
+#endif
     return __cpuverusoptimized;
 };
 
@@ -193,6 +197,7 @@ struct verusclhasher {
 
     verusclhasher(uint64_t keysize=VERUSKEYSIZE, int solutionVersion=SOLUTION_VERUSHHASH_V2) : keySizeInBytes((keysize >> 5) << 5)
     {
+#if !defined(VERUSHASH_PORTABLE_ONLY)
         if (IsCPUVerusOptimized())
         {
             if (solutionVersion >= SOLUTION_VERUSHHASH_V2_1)
@@ -215,6 +220,7 @@ struct verusclhasher {
             }
         }
         else
+#endif
         {
             if (solutionVersion >= SOLUTION_VERUSHHASH_V2_1)
             {

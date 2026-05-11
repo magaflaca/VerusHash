@@ -14,8 +14,6 @@
 #include <intrin.h>
 #include <malloc.h>
 #endif
-int __cpuverusoptimized = 0x80;
-
 #if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64) || defined(_M_ARM) || defined(_M_ARM64) || defined(_M_ARM) || defined(_M_ARM64)
 #if !defined(__clang__) && defined(__GNUC__) && __GNUC__ < 10
 #include "crypto/compat/sse2neon.h"
@@ -32,24 +30,6 @@ int __cpuverusoptimized = 0x80;
 
 #ifdef _WIN32
 #define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno)
-#endif
-
-thread_local thread_specific_ptr verusclhasher_key;
-thread_local thread_specific_ptr verusclhasher_descr;
-
-#if defined(__APPLE__) || defined(_WIN32)
-
-
-thread_specific_ptr::~thread_specific_ptr() {
-    if (verusclhasher_key.ptr)
-    {
-        verusclhasher_key.reset();
-    }
-    if (verusclhasher_descr.ptr)
-    {
-        verusclhasher_descr.reset();
-    }
-}
 #endif
 
 
@@ -954,15 +934,3 @@ __m128i __verusclmulwithoutreduction64alignedrepeat_sv2_2(__m128i *randomsource,
     return acc;
 }
 
-void *alloc_aligned_buffer(uint64_t bufSize)
-{
-    void *answer = NULL;
-    if (posix_memalign(&answer, sizeof(__m128i)*2, bufSize))
-    {
-        return NULL;
-    }
-    else
-    {
-        return answer;
-    }
-}
