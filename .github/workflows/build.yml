@@ -38,18 +38,23 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
         run: |
           set -euo pipefail
-          docker run --rm --platform "$PLATFORM" -e ARTIFACT="$ARTIFACT" -v "$PWD:/src" -w /src "$IMAGE" /bin/bash -s <<'BASH'
+          rm -rf build dist "${ARTIFACT}.tar.gz"
+          docker run --rm --platform "${PLATFORM}" -e ARTIFACT="${ARTIFACT}" -v "${PWD}:/work" -w /work "${IMAGE}" /bin/bash -lc '
           set -euo pipefail
-          PYBIN="$(find /opt/python \( -path '/opt/python/cp*/bin/python3' -o -path '/opt/python/cp*/bin/python' \) | sort | tail -n 1)"
-          test -n "$PYBIN"
-          "$PYBIN" -m pip install --quiet --upgrade pip
-          "$PYBIN" -m pip install --quiet cmake ninja
-          export PATH="$(dirname "$PYBIN"):$PATH"
+          PYBIN="$(find /opt/python -maxdepth 3 \( -name python3 -o -name python \) | sort | tail -n 1)"
+          test -n "${PYBIN}"
+          "${PYBIN}" -m pip install --quiet --upgrade pip
+          "${PYBIN}" -m pip install --quiet cmake ninja
+          export PATH="$(dirname "${PYBIN}"):${PATH}"
+          rm -rf build "dist/${ARTIFACT}"
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DVERUSHASH_PORTABLE_ONLY=ON
           cmake --build build --config Release --parallel
           cmake --install build --config Release --prefix "dist/${ARTIFACT}"
-          BASH
-          tar -czf "${ARTIFACT}.tar.gz" -C dist "$ARTIFACT"
+          test -d "dist/${ARTIFACT}"
+          tar -czf "${ARTIFACT}.tar.gz" -C dist "${ARTIFACT}"
+          test -f "${ARTIFACT}.tar.gz"
+          '
+          test -f "${ARTIFACT}.tar.gz"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
@@ -81,6 +86,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: x86
+            arch: Win32
           - name: x64
             arch: x64
           - name: arm64

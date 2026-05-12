@@ -31,7 +31,7 @@ cmake --build build --config Release
 cmake --install build --config Release --prefix dist
 ```
 
-Windows:
+Windows x64:
 
 ```powershell
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
@@ -46,6 +46,7 @@ GitHub Actions builds a small release set:
 - `linux-x86_64`
 - `linux-aarch64`
 - `macos-universal2`
+- `windows-x86`
 - `windows-x64`
 - `windows-arm64`
 
@@ -61,3 +62,5 @@ To enable runtime optimized x86 code in a local build:
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DVERUSHASH_PORTABLE_ONLY=OFF
 ```
+
+`windows-arm64` is Windows on ARM64, not 32-bit x86.
