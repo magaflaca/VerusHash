@@ -30,17 +30,26 @@ jobs:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3
         if: matrix.platform == 'linux/arm64'
-      - shell: bash
+      - name: Build in manylinux
+        shell: bash
+        env:
+          ARTIFACT: ${{ matrix.artifact }}
+          IMAGE: ${{ matrix.image }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
-          docker run --rm --platform ${{ matrix.platform }} -v "$PWD:/src" -w /src ${{ matrix.image }} /bin/bash -lc '
-            PYTHON=$(find /opt/python -path "*/bin/python" | sort | tail -n 1)
-            BINDIR=$(dirname "$PYTHON")
-            "$PYTHON" -m pip install --quiet cmake
-            "$BINDIR/cmake" -S . -B build -DCMAKE_BUILD_TYPE=Release -DVERUSHASH_PORTABLE_ONLY=ON
-            "$BINDIR/cmake" --build build --config Release --parallel
-            "$BINDIR/cmake" --install build --config Release --prefix dist/${{ matrix.artifact }}
-          '
-          tar -czf ${{ matrix.artifact }}.tar.gz -C dist ${{ matrix.artifact }}
+          set -euo pipefail
+          docker run --rm --platform "$PLATFORM" -e ARTIFACT="$ARTIFACT" -v "$PWD:/src" -w /src "$IMAGE" /bin/bash -s <<'BASH'
+          set -euo pipefail
+          PYBIN="$(find /opt/python \( -path '/opt/python/cp*/bin/python3' -o -path '/opt/python/cp*/bin/python' \) | sort | tail -n 1)"
+          test -n "$PYBIN"
+          "$PYBIN" -m pip install --quiet --upgrade pip
+          "$PYBIN" -m pip install --quiet cmake ninja
+          export PATH="$(dirname "$PYBIN"):$PATH"
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DVERUSHASH_PORTABLE_ONLY=ON
+          cmake --build build --config Release --parallel
+          cmake --install build --config Release --prefix "dist/${ARTIFACT}"
+          BASH
+          tar -czf "${ARTIFACT}.tar.gz" -C dist "$ARTIFACT"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
@@ -52,10 +61,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: lukka/get-cmake@latest
-      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DVERUSHASH_PORTABLE_ONLY=ON -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
-      - run: cmake --build build --config Release --parallel
-      - run: cmake --install build --config Release --prefix dist/macos-universal2
-      - run: tar -czf macos-universal2.tar.gz -C dist macos-universal2
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DVERUSHASH_PORTABLE_ONLY=ON -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Install
+        run: cmake --install build --config Release --prefix dist/macos-universal2
+      - name: Package
+        run: tar -czf macos-universal2.tar.gz -C dist macos-universal2
       - uses: actions/upload-artifact@v4
         with:
           name: macos-universal2
@@ -75,10 +88,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: lukka/get-cmake@latest
-      - run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DVERUSHASH_PORTABLE_ONLY=ON
-      - run: cmake --build build --config Release --parallel
-      - run: cmake --install build --config Release --prefix dist/windows-${{ matrix.name }}
-      - shell: pwsh
+      - name: Configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DVERUSHASH_PORTABLE_ONLY=ON
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Install
+        run: cmake --install build --config Release --prefix dist/windows-${{ matrix.name }}
+      - name: Package
+        shell: pwsh
         run: Compress-Archive -Path dist/windows-${{ matrix.name }}/* -DestinationPath windows-${{ matrix.name }}.zip
       - uses: actions/upload-artifact@v4
         with:

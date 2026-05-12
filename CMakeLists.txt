@@ -54,10 +54,11 @@ target_include_directories(verushash
 target_compile_definitions(verushash PRIVATE VERUSHASH_LIB_BUILD)
 
 if(MSVC)
-    target_compile_options(verushash PRIVATE /O2 /EHsc /W3 /wd4146 /wd4244 /wd4267 /wd4309 /wd4101 /wd4334)
-    target_compile_definitions(verushash PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
+    target_compile_options(verushash PRIVATE /O2 /EHsc /W3 /Zc:preprocessor /wd4146 /wd4244 /wd4267 /wd4309 /wd4101 /wd4334)
+    target_compile_definitions(verushash PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX SSE2NEON_SUPPRESS_WARNINGS)
 else()
     target_compile_options(verushash PRIVATE -O3 -Wall -Wextra -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-sign-compare -Wno-strict-aliasing -Wno-maybe-uninitialized -Wno-uninitialized)
+    target_compile_definitions(verushash PRIVATE SSE2NEON_SUPPRESS_WARNINGS)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         target_compile_options(verushash PRIVATE -fvisibility=hidden)
     endif()
