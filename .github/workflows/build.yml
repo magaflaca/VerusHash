@@ -41,11 +41,13 @@ jobs:
           rm -rf build dist "${ARTIFACT}.tar.gz"
           docker run --rm --platform "${PLATFORM}" -e ARTIFACT="${ARTIFACT}" -v "${PWD}:/work" -w /work "${IMAGE}" /bin/bash -lc '
           set -euo pipefail
-          PYBIN="$(find /opt/python -maxdepth 3 \( -name python3 -o -name python \) | sort | tail -n 1)"
-          test -n "${PYBIN}"
+          PYBIN="$(for p in /opt/python/cp*/bin/python3 /opt/python/cp*/bin/python; do if [ -x "$p" ]; then echo "$p"; fi; done | sort | tail -n 1)"
+          test -x "${PYBIN}"
           "${PYBIN}" -m pip install --quiet --upgrade pip
           "${PYBIN}" -m pip install --quiet cmake ninja
           export PATH="$(dirname "${PYBIN}"):${PATH}"
+          command -v cmake
+          command -v ninja
           rm -rf build "dist/${ARTIFACT}"
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DVERUSHASH_PORTABLE_ONLY=ON
           cmake --build build --config Release --parallel
