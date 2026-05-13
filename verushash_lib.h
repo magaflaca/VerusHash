@@ -24,7 +24,8 @@ extern "C" {
 
 #define VERUSHASH_OUTPUT_SIZE 32
 #define VERUSHASH_EQUIHASH_HEADER_SIZE 140
-#define VERUSHASH_SOLUTION_SIZE 1344
+#define VERUSHASH_MIN_SOLUTION_SIZE 33
+#define VERUSHASH_MAX_SOLUTION_SIZE 4096
 
 enum verushash_solution_version
 {
@@ -55,10 +56,11 @@ VERUSHASH_API int verushash_hash_v1(const unsigned char *input, size_t input_len
 VERUSHASH_API int verushash_hash_v2b_version(const unsigned char *input, size_t input_len, unsigned char *output32, int solution_version);
 
 VERUSHASH_API size_t verushash_equihash_header_size(void);
-VERUSHASH_API size_t verushash_solution_size(void);
-VERUSHASH_API size_t verushash_solution_nonce_offset(void);
-VERUSHASH_API int verushash_scan_v2_2(const unsigned char *header140, size_t header_len, const unsigned char *solution1344, size_t solution_len, const unsigned char *target32_le, uint64_t start_nonce, uint64_t max_nonce_count, uint64_t *hashes_done, uint64_t *found_nonce, unsigned char *output_solution1344, unsigned char *output_hash32);
-VERUSHASH_API int verushash_scan_v2b_version(const unsigned char *header140, size_t header_len, const unsigned char *solution1344, size_t solution_len, const unsigned char *target32_le, uint64_t start_nonce, uint64_t max_nonce_count, uint64_t *hashes_done, uint64_t *found_nonce, unsigned char *output_solution1344, unsigned char *output_hash32, int solution_version);
+VERUSHASH_API size_t verushash_min_solution_size(void);
+VERUSHASH_API size_t verushash_max_solution_size(void);
+VERUSHASH_API size_t verushash_solution_nonce_offset(size_t solution_len);
+VERUSHASH_API int verushash_scan_v2_2(const unsigned char *header140, size_t header_len, const unsigned char *solution, size_t solution_len, const unsigned char *target32_le, uint64_t start_nonce, uint64_t max_nonce_count, uint64_t *hashes_done, uint64_t *found_nonce, unsigned char *output_solution, unsigned char *output_hash32);
+VERUSHASH_API int verushash_scan_v2b_version(const unsigned char *header140, size_t header_len, const unsigned char *solution, size_t solution_len, const unsigned char *target32_le, uint64_t start_nonce, uint64_t max_nonce_count, uint64_t *hashes_done, uint64_t *found_nonce, unsigned char *output_solution, unsigned char *output_hash32, int solution_version);
 
 #ifdef __cplusplus
 }
