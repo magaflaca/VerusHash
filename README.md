@@ -4,24 +4,16 @@ Standalone C ABI shared library for VerusHash.
 
 Maintainer: isawicca <isa@cenizalunar.com>
 
-## About
+## What it provides
 
-This repository contains the VerusHash core and a small C wrapper.
-It does not include wallet, RPC, network, CLI, mining, or blockchain code.
+This repository builds `verushash` as a shared library.
 
-The default function uses VerusHash 2.2.
+It exposes two groups of functions:
 
-## API
+- VerusHash digest functions.
+- VerusHash 2.2 scan functions for pool mining work that includes a 140 byte Equihash-style header and a 1344 byte Verus solution template.
 
-```c
-#include "verushash_lib.h"
-
-unsigned char out[VERUSHASH_OUTPUT_SIZE];
-int rc = verushash_hash(input, input_len, out);
-```
-
-`rc` is `VERUSHASH_SUCCESS` when the hash was written.
-The output is always 32 bytes.
+The default hash version is VerusHash 2.2.
 
 ## Build
 
@@ -39,9 +31,74 @@ cmake --build build --config Release
 cmake --install build --config Release --prefix dist
 ```
 
+Windows x86:
+
+```powershell
+cmake -S . -B build -G "Visual Studio 17 2022" -A Win32
+cmake --build build --config Release
+cmake --install build --config Release --prefix dist
+```
+
+Windows ARM64:
+
+```powershell
+cmake -S . -B build -G "Visual Studio 17 2022" -A ARM64
+cmake --build build --config Release
+cmake --install build --config Release --prefix dist
+```
+
+## Hash API
+
+```c
+#include "verushash_lib.h"
+
+unsigned char out[VERUSHASH_OUTPUT_SIZE];
+int rc = verushash_hash(input, input_len, out);
+```
+
+`rc` is `VERUSHASH_SUCCESS` when the hash was written.
+The output is always 32 bytes.
+
+## Mining scan API
+
+Use this API when the pool job already provides:
+
+- 140 byte Equihash-style block header.
+- 1344 byte Verus solution template.
+- 32 byte share target in little-endian numeric form.
+
+```c
+unsigned char out_solution[VERUSHASH_SOLUTION_SIZE];
+unsigned char out_hash[VERUSHASH_OUTPUT_SIZE];
+uint64_t hashes_done = 0;
+uint64_t found_nonce = 0;
+
+int rc = verushash_scan_v2_2(
+    header140,
+    VERUSHASH_EQUIHASH_HEADER_SIZE,
+    solution1344,
+    VERUSHASH_SOLUTION_SIZE,
+    target32_le,
+    start_nonce,
+    nonce_count,
+    &hashes_done,
+    &found_nonce,
+    out_solution,
+    out_hash
+);
+```
+
+Return values:
+
+- `VERUSHASH_SCAN_FOUND`: `out_solution`, `out_hash`, and `found_nonce` are valid.
+- `VERUSHASH_SCAN_NOT_FOUND`: no share was found in the requested nonce range.
+- Any `VERUSHASH_ERROR_*`: invalid input or internal failure.
+
+The returned solution is exactly 1344 bytes and has the mined nonce inserted at the Verus solution extra field used by the original Verus miner.
+
 ## Release artifacts
 
-GitHub Actions builds a small release set:
+GitHub Actions builds:
 
 - `linux-x86_64`
 - `linux-aarch64`
@@ -50,12 +107,12 @@ GitHub Actions builds a small release set:
 - `windows-x64`
 - `windows-arm64`
 
-Create a tag like `v1.0.0` to publish the artifacts to a GitHub release.
+Create a tag like `v1.1.0` to publish the artifacts to a GitHub release.
 
 ## Portable mode
 
 Portable mode is enabled by default.
-It avoids CPU-specific binaries and is the right choice for public releases.
+It avoids CPU-specific binaries and is the correct mode for public releases.
 
 To enable runtime optimized x86 code in a local build:
 

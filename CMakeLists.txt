@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(verushash
-    VERSION 1.0.0
+    VERSION 1.1.0
     DESCRIPTION "Standalone C ABI shared library for VerusHash"
     LANGUAGES C CXX)
 
@@ -13,6 +13,7 @@ add_library(verushash::verushash ALIAS verushash)
 
 target_sources(verushash PRIVATE
     verushash_lib.cpp
+    verushash_mine.cpp
     crypto/verus_hash.cpp
     crypto/verus_runtime.cpp
     crypto/verus_clhash_portable.cpp
