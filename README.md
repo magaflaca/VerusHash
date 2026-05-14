@@ -2,8 +2,6 @@
 
 Standalone C ABI shared library for VerusHash.
 
-Maintainer: isawicca <isa@cenizalunar.com>
-
 ## What it provides
 
 This repository builds `verushash` as a shared library.
